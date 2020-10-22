@@ -11,8 +11,7 @@ from google.colab import drive
 drive.mount('/content/drive/')
 
 # -*- coding: utf-8 -*-
-#
-##
+
 """
 
 @author: yh960
@@ -36,12 +35,13 @@ def loadTrainData():
               l.append(line)
           l.remove(l[0])
           l=array(l)
+          print(l.shape)
           data, label = l[:,1:], l[:,0]
           label = label[:,newaxis]
           data = toInt(data)
           label = toInt(label)
           return data, label
-      
+
 # integer
 def toInt(array):
     tensor = torch.from_numpy(array.astype(numpy.int_)).to(device)
@@ -103,31 +103,41 @@ def classify(inX, dataSet, labels, k):
 # main
 start = time.time()
 
-m,n=shape(testData)
 errorCount=0
 resultList=[]
 splitTrainDataSize = 33600
 splitTestDataSize = 8400
+k=1
+
 splitTrainData = torch.split(trainData, [splitTrainDataSize, splitTestDataSize])
 splitTrainLabel = torch.split(trainLabel, [splitTrainDataSize, splitTestDataSize])
 for i in range(splitTestDataSize):
-        classifierResult = classify(splitTrainData[1][27], splitTrainData[0], splitTrainLabel[0], 19)
-        resultList.append(classifierResult)
-        if i % 1000 == 0:
-            print(time.time()-start)
-        #print("the classifier for %d came back with: %d, the actual answer is %d" % (i, classifierResult, splitTrainLabel[1][27]))
-        if (classifierResult != splitTrainLabel[1][27]): 
-            errorCount += 1.0
-import matplotlib.pyplot as plt
-abc = splitTrainData[1][27].cpu().numpy()
+    classifierResult = classify(splitTrainData[1][i], splitTrainData[0], splitTrainLabel[0], k)
+    #resultList.append(classifierResult)
+    if i % 1000 == 0:
+        print(time.time()-start)
+    #print("the classifier for %d came back with: %d, the actual answer is %d" % (i, classifierResult, splitTrainLabel[1][27]))
+    if (classifierResult != splitTrainLabel[1][i]): 
+        errorCount += 1
 
 
-
-plt.imshow(abc.reshape((28,28)))
 
 end = time.time()
 print (end - start)
 print("\nthe total number of errors is: %d" % errorCount)
 print("\nthe total error rate is: %f" % (errorCount/float(splitTestDataSize)))
+
+start = time.time()
+testDataSize = testData.shape
+print(testDataSize)
+for i in range(testDataSize[0]):
+    classifierResult = classify(testData[i], splitTrainData[0], splitTrainLabel[0], k)
+    resultList.append(classifierResult)
+    if i % 1000 == 0:
+        print(time.time()-start)
+    #print("the classifier for %d came back with: %d, the actual answer is %d" % (i, classifierResult, splitTrainLabel[1][i]))
+    #if (classifierResult != splitTrainLabel[1][i]): 
+        #errorCount += 1
+
 
 saveResult(resultList)
